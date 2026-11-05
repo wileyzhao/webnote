@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <title>大模型推理成本一年下降十倍，工程侧发生了什么 - 深读</title>
+    <style>
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB",
+          "Microsoft YaHei", sans-serif;
+        background: #ffffff;
+        color: #1f2328;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      /* ---------- 站点头部 ---------- */
+      .site-header {
+        height: 60px;
+        border-bottom: 1px solid #eceef1;
+        display: flex;
+        align-items: center;
+        padding: 0 40px;
+        gap: 28px;
+      }
+
+      .logo {
+        font-size: 19px;
+        font-weight: 750;
+        letter-spacing: 1px;
+        color: #15181d;
+      }
+
+      .logo span {
+        color: #ffb300;
+      }
+
+      .nav {
+        display: flex;
+        gap: 22px;
+        font-size: 14px;
+        color: #5b6470;
+      }
+
+      .nav .on {
+        color: #15181d;
+        font-weight: 600;
+      }
+
+      .header-right {
+        margin-left: auto;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+      }
+
+      .search {
+        width: 190px;
+        height: 32px;
+        border-radius: 16px;
+        background: #f4f5f7;
+        display: flex;
+        align-items: center;
+        padding: 0 14px;
+        font-size: 13px;
+        color: #9aa1ab;
+      }
+
+      .avatar {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #ffd76b, #ffb300);
+      }
+
+      /* ---------- 正文 ---------- */
+      .article {
+        width: 780px;
+        margin: 0 auto;
+        padding: 44px 0 80px;
+      }
+
+      .kicker {
+        display: inline-block;
+        font-size: 12.5px;
+        font-weight: 600;
+        color: #b07800;
+        background: #fff6dd;
+        padding: 3px 10px;
+        border-radius: 5px;
+        letter-spacing: 0.5px;
+      }
+
+      h1 {
+        margin-top: 16px;
+        font-size: 33px;
+        line-height: 1.4;
+        letter-spacing: -0.3px;
+        font-weight: 700;
+      }
+
+      .byline {
+        margin-top: 16px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 13px;
+        color: #8a929c;
+      }
+
+      .divider {
+        height: 1px;
+        background: #eceef1;
+        margin: 26px 0 56px;
+      }
+
+      p {
+        font-size: 17px;
+        line-height: 2;
+        margin-bottom: 22px;
+        color: #24282e;
+      }
+
+      p:first-of-type {
+        margin-top: 0;
+      }
+
+      em {
+        font-style: normal;
+        font-weight: 600;
+      }
+
+      .figure {
+        margin: 30px 0;
+        height: 132px;
+        border-radius: 10px;
+        background: linear-gradient(135deg, #f7f8fa, #eef0f4);
+        border: 1px solid #e8eaee;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #a3aab4;
+        font-size: 13px;
+      }
+    </style>
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="logo">深读<span>.</span></div>
+      <nav class="nav">
+        <span class="on">推荐</span>
+        <span>架构</span>
+        <span>AI 工程</span>
+        <span>前端</span>
+        <span>开源</span>
+      </nav>
+      <div class="header-right">
+        <div class="search">搜索文章、作者或标签</div>
+        <div class="avatar"></div>
+      </div>
+    </header>
+
+    <article class="article">
+      <span class="kicker">架构</span>
+      <h1>大模型推理成本一年下降十倍，工程侧发生了什么</h1>
+      <div class="byline">
+        <span>2026-11-05</span>
+        <span>·</span>
+        <span>深度长文</span>
+        <span>·</span>
+        <span>阅读 8921</span>
+        <span>·</span>
+        <span>约 12 分钟</span>
+      </div>
+
+      <div class="divider"></div>
+
+      <p id="p1">
+        过去一年，推理侧的单位 token 成本下降了接近一个数量级。这个变化并不是单一技术突破带来的，
+        而是模型结构、量化、KV Cache 管理、批处理调度和硬件利用率共同作用的结果。
+      </p>
+
+      <p id="p2">
+        先看最容易被忽视的一环：<em>批处理调度</em>。连续批处理把请求的调度粒度
+        从「整批」下沉到「单步」，让 GPU 在等待某个请求生成时不会空转，实际吞吐提升往往在两倍以上。
+      </p>
+
+      <div class="figure">示意图：请求调度时序对比</div>
+
+      <p id="p3">
+        其次是 KV Cache 的显存管理。分页式 KV Cache 借鉴了操作系统虚拟内存的思路，
+        把显存切成固定大小的块按需分配，显存碎片率显著下降，能同时挂载的会话数也随之上升。
+      </p>
+
+      <p id="p4">
+        这些优化叠加起来，才让「每百万 token 几块钱」成为可能。便宜下来的推理，
+        又反过来改变了产品设计——长上下文、多轮反思、批量生成，都不再是奢侈品。
+      </p>
+    </article>
+  </body>
+</html>

@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <title>WebNote 440x280</title>
+    <style>
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+
+      html,
+      body {
+        width: 440px;
+        height: 280px;
+        overflow: hidden;
+      }
+
+      body {
+        position: relative;
+        font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB",
+          "Microsoft YaHei", sans-serif;
+        background: linear-gradient(135deg, #fffdf5 0%, #fff1c9 52%, #ffe49c 100%);
+        -webkit-font-smoothing: antialiased;
+        color: #1f2328;
+      }
+
+      /* 右上角柔光，避免大面积纯色发闷 */
+      .glow {
+        position: absolute;
+        width: 320px;
+        height: 320px;
+        right: -110px;
+        top: -150px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(255, 196, 40, 0.55) 0%, rgba(255, 196, 40, 0) 68%);
+      }
+
+      .inner {
+        position: relative;
+        z-index: 2;
+        height: 100%;
+        padding: 24px 26px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .brand img {
+        width: 26px;
+        height: 26px;
+        border-radius: 7px;
+        display: block;
+      }
+
+      .brand span {
+        font-size: 15px;
+        font-weight: 750;
+        letter-spacing: 0.2px;
+      }
+
+      .copy h1 {
+        font-size: 30px;
+        line-height: 1.28;
+        font-weight: 800;
+        letter-spacing: -0.8px;
+      }
+
+      .copy h1 em {
+        font-style: normal;
+        color: #b57b00;
+      }
+
+      .copy p {
+        margin-top: 9px;
+        font-size: 12.5px;
+        font-weight: 500;
+        color: #8a7644;
+        letter-spacing: 0.2px;
+      }
+
+      /* 右侧示意卡片：模拟一段被高亮的文字 */
+      .mock {
+        position: absolute;
+        right: 26px;
+        top: 82px;
+        width: 128px;
+        height: 142px;
+        background: #ffffff;
+        border-radius: 11px;
+        box-shadow: 0 10px 26px rgba(160, 110, 0, 0.16), 0 2px 6px rgba(160, 110, 0, 0.08);
+        padding: 14px 12px;
+        transform: rotate(-2deg);
+      }
+
+      .mock .dot {
+        width: 20px;
+        height: 5px;
+        border-radius: 3px;
+        background: #ffcf3d;
+        margin-bottom: 12px;
+      }
+
+      .line {
+        height: 6px;
+        border-radius: 3px;
+        background: #e8eaee;
+        margin-bottom: 9px;
+      }
+
+      .line.w80 { width: 80%; }
+      .line.w60 { width: 60%; }
+      .line.w90 { width: 90%; }
+
+      .line.hl {
+        background: #ffd84d;
+        width: 100%;
+        height: 9px;
+        margin-bottom: 10px;
+      }
+
+      .line.hl.short {
+        width: 72%;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="glow"></div>
+
+    <div class="inner">
+      <div class="brand">
+        <img src="../../assets/icons/icon48.png" alt="" />
+        <span>WebNote</span>
+      </div>
+
+      <div class="copy">
+        <h1>划词高亮<br /><em>私人批注</em></h1>
+        <p>只存在本机 · 不上传 · 不登录</p>
+      </div>
+    </div>
+
+    <div class="mock">
+      <div class="dot"></div>
+      <div class="line w90"></div>
+      <div class="line hl"></div>
+      <div class="line hl short"></div>
+      <div class="line w80"></div>
+      <div class="line w60"></div>
+    </div>
+  </body>
+</html>

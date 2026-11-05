@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WebNote · 我的标注库</title>
+    <link rel="stylesheet" href="dashboard.css" />
+  </head>
+  <body>
+    <div class="shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <img src="../../assets/icons/icon48.png" alt="" class="brand-logo" />
+          <div>
+            <div class="brand-name">WebNote</div>
+            <div class="brand-sub">我的标注库</div>
+          </div>
+        </div>
+
+        <div class="search">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <circle cx="11" cy="11" r="7" />
+            <path d="m20 20-3.5-3.5" />
+          </svg>
+          <input id="search" type="search" placeholder="搜索页面、原文或批注" autocomplete="off" />
+        </div>
+
+        <div class="tree-head">
+          <span>标签</span>
+          <button class="icon-btn" id="btnNewTag" title="新建标签">＋</button>
+        </div>
+
+        <nav class="tree" id="tree"></nav>
+
+        <div class="side-stats" id="sideStats"></div>
+
+        <div class="side-foot">
+          <button class="side-btn" id="btnExport" title="导出为 JSON 备份">导出</button>
+          <button class="side-btn" id="btnImport" title="从 JSON 备份恢复">导入</button>
+          <button class="side-btn" id="btnSettings" title="设置">设置</button>
+        </div>
+        <input type="file" id="fileInput" accept="application/json" hidden />
+      </aside>
+
+      <main class="main">
+        <header class="topbar">
+          <div class="topbar-text">
+            <h1 id="viewTitle">全部页面</h1>
+            <div class="view-sub" id="viewSub"></div>
+          </div>
+          <div class="topbar-actions">
+            <select id="sort" class="select" title="排序方式">
+              <option value="updated">最近更新</option>
+              <option value="created">最近保存</option>
+              <option value="count">标注最多</option>
+              <option value="title">按标题</option>
+            </select>
+          </div>
+        </header>
+
+        <div class="contents" id="contents"></div>
+      </main>
+    </div>
+
+    <div id="modalRoot"></div>
+    <div class="toast" id="toast"></div>
+
+    <script src="../shared/model.js"></script>
+    <script src="../shared/store.js"></script>
+    <script src="dashboard.js"></script>
+  </body>
+</html>

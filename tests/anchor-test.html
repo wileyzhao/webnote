@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <title>anchor test</title>
+  </head>
+  <body>
+    <article id="doc">
+      <h1>测试标题</h1>
+      <p id="p1">第一段文字，用来测试标注定位。</p>
+      <p id="p2">第二段有些<em>强调的内容</em>，也有普通文字。</p>
+      <ul>
+        <li>列表项一</li>
+        <li>列表项二</li>
+      </ul>
+      <div id="hiddenBox" style="display: none">隐藏文字不应该被索引</div>
+      <p id="p3">第三段结尾，收个尾。</p>
+      <p id="p4">容器选区测试</p>
+    </article>
+    <pre id="result">BOOT</pre>
+
+    <script>
+      window.addEventListener(
+        'error',
+        function (e) {
+          var pre = document.getElementById('result');
+          pre.textContent += '\nJSERROR :: ' + e.message + ' @ ' + (e.filename || '') + ':' + e.lineno;
+          document.title = 'ERR';
+        },
+        true
+      );
+    </script>
+
+    <script src="../src/content/anchor.js"></script>
+    <script>
+      (function () {
+        var pre = document.getElementById('result');
+        var out = [];
+        pre.textContent = 'WN=' + typeof window.WN + ' anchor=' + (window.WN && typeof window.WN.anchor);
+
+        function check(name, cond, extra) {
+          out.push((cond ? 'PASS' : 'FAIL') + ' :: ' + name + (extra !== undefined ? ' :: ' + extra : ''));
+        }
+
+        var A = window.WN.anchor;
+
+        // --- 1. 索引构建
+        var idx = A.getIndex();
+        check('隐藏元素不进入索引', idx.text.indexOf('隐藏文字') === -1);
+        check('正文进入索引', idx.text.indexOf('第二段有些') >= 0);
+        check('索引长度合理', idx.text.length > 40, idx.text.length);
+
+        // --- 2. 单节点选区 -> 选择器
+        var p2 = document.getElementById('p2');
+        var r2 = document.createRange();
+        r2.setStart(p2.firstChild, 2); // "第二段有些" -> "段有些"
+        r2.setEnd(p2.firstChild, 5);
+        var sel2 = A.selectorFromRange(r2);
+        check('quote 截取正确', !!sel2 && sel2.quote === '段有些', sel2 ? JSON.stringify(sel2.quote) : 'null');
+        check('带上了前文', !!sel2 && sel2.prefix.length > 0);
+        check('带上了后文', !!sel2 && sel2.suffix.length > 0);
+
+        // --- 3. 原样定位
+        var back = A.rangeFromAnnotation(sel2);
+        check('能定位回原选区', !!back && back.range.toString() === '段有些', back ? JSON.stringify(back.range.toString()) : 'null');
+
+        // --- 4. 跨节点选区（文本节点 -> em 内部）
+        var em = p2.querySelector('em');
+        var r3 = document.createRange();
+        r3.setStart(p2.firstChild, 3); // "些"
+        r3.setEnd(em.firstChild, 4); // "强调的"
+        var sel3 = A.selectorFromRange(r3);
+        check('跨节点 quote 正确', !!sel3 && sel3.quote === '有些强调的内', sel3 ? JSON.stringify(sel3.quote) : 'null');
+        var back3 = A.rangeFromAnnotation(sel3);
+        check('跨节点可定位', !!back3 && back3.range.toString() === '有些强调的内', back3 ? JSON.stringify(back3.range.toString()) : 'null');
+
+        // --- 5. 整体选中 em
+        var r4 = document.createRange();
+        r4.selectNodeContents(em);
+        var sel4 = A.selectorFromRange(r4);
+        check('整节点 quote', !!sel4 && sel4.quote === '强调的内容', sel4 ? JSON.stringify(sel4.quote) : 'null');
+
+        // --- 6. DOM 插入后仍能回落定位（偏移量失效）
+        var p1 = document.getElementById('p1');
+        var injected = document.createElement('p');
+        injected.textContent = '这段是后来插入的干扰文字，它会让后面所有内容的偏移量发生位移。';
+        p1.parentNode.insertBefore(injected, p1);
+        A.invalidate();
+
+        var afterInsert = A.rangeFromAnnotation(sel2);
+        check('插入段落后仍能定位', !!afterInsert && afterInsert.range.toString() === '段有些', afterInsert ? JSON.stringify(afterInsert.range.toString()) : 'null');
+        check(
+          '插入段落后偏移量已更新',
+          !!afterInsert && afterInsert.start !== sel2.start,
+          afterInsert ? sel2.start + ' -> ' + afterInsert.start : 'null'
+        );
+
+        // --- 7. 重复文本：优先回到原位置
+        var dup = document.createElement('p');
+        dup.textContent = '重复出现的短语。';
+        document.getElementById('doc').appendChild(dup);
+        A.invalidate();
+        var dup2 = document.createElement('p');
+        dup2.textContent = '中间隔开。重复出现的短语。';
+        document.getElementById('doc').appendChild(dup2);
+        A.invalidate();
+
+        var rd = document.createRange();
+        rd.setStart(dup.firstChild, 0);
+        rd.setEnd(dup.firstChild, 7);
+        var selD = A.selectorFromRange(rd);
+        var backD = A.rangeFromAnnotation(selD);
+        check('重复文本定位正确', !!backD && backD.range.toString() === '重复出现的短语', backD ? JSON.stringify(backD.range.toString()) : 'null');
+
+        // --- 8. 空白宽松匹配（原文里词之间没有空格）
+        var loose = A.locate({ start: 0, end: 0, quote: '列表项一 列表项二', prefix: '', suffix: '' });
+        check('空白宽松匹配可用', !!loose, loose ? JSON.stringify(loose) : 'null');
+
+        // --- 9. 彻底找不到时返回 null
+        var missing = A.locate({ start: 0, end: 0, quote: '这段文字在页面上根本不存在啊啊啊', prefix: '', suffix: '' });
+        check('找不到时返回 null', missing === null, String(missing));
+
+        // --- 10. 空选区不产生选择器
+        var emptyRange = document.createRange();
+        emptyRange.setStart(p1.firstChild, 0);
+        emptyRange.setEnd(p1.firstChild, 0);
+        check('空选区返回 null', A.selectorFromRange(emptyRange) === null);
+
+        // --- 11. 越界偏移不抛异常
+        var safe = 'THREW';
+        try {
+          safe = String(A.rangeFromOffsets(999999, 1000000));
+        } catch (e) {
+          safe = 'THREW';
+        }
+        check('越界偏移不抛异常', safe !== 'THREW', safe);
+
+        // --- 12. 元素作为选区容器、首个子节点是空文本节点（InfoQ 真实崩溃场景）
+        var p4 = document.getElementById('p4');
+        p4.insertBefore(document.createTextNode(''), p4.firstChild);
+        A.invalidate();
+
+        var elemSel = null;
+        var elemErr = null;
+        try {
+          var r6 = document.createRange();
+          r6.setStart(p4, 0);
+          r6.setEnd(p4, p4.childNodes.length);
+          elemSel = A.selectorFromRange(r6);
+        } catch (e) {
+          elemErr = e.message;
+        }
+        check('元素容器 + 空文本节点不崩溃', elemErr === null, elemErr);
+        check('元素容器能取到原文', !!elemSel && elemSel.quote.indexOf('容器选区测试') >= 0, elemSel && elemSel.quote);
+
+        // --- 13. 容器里全是不可索引内容时安全返回 null
+        var hiddenBox = document.getElementById('hiddenBox');
+        var hiddenRes = 'threw';
+        try {
+          var r7 = document.createRange();
+          r7.setStart(hiddenBox, 0);
+          r7.setEnd(hiddenBox, hiddenBox.childNodes.length);
+          hiddenRes = A.selectorFromRange(r7);
+        } catch (e) {
+          hiddenRes = 'threw';
+        }
+        check('全隐藏容器不崩溃', hiddenRes !== 'threw', String(hiddenRes));
+
+        pre.textContent = out.join('\n');
+        document.title = out.some(function (l) {
+          return l.indexOf('FAIL') === 0;
+        })
+          ? 'FAILED'
+          : 'ALLPASS';
+      })();
+    </script>
+  </body>
+</html>

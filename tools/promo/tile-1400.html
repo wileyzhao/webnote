@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <title>WebNote 1400x560</title>
+    <style>
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+
+      html,
+      body {
+        width: 1400px;
+        height: 560px;
+        overflow: hidden;
+      }
+
+      body {
+        position: relative;
+        font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB",
+          "Microsoft YaHei", sans-serif;
+        background: linear-gradient(120deg, #fffdf6 0%, #fff4d3 46%, #ffe7a6 100%);
+        -webkit-font-smoothing: antialiased;
+        color: #1f2328;
+      }
+
+      .glow {
+        position: absolute;
+        width: 720px;
+        height: 720px;
+        right: -180px;
+        top: -260px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(255, 187, 20, 0.42) 0%, rgba(255, 187, 20, 0) 66%);
+      }
+
+      .glow-2 {
+        position: absolute;
+        width: 520px;
+        height: 520px;
+        left: -220px;
+        bottom: -280px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(255, 214, 102, 0.34) 0%, rgba(255, 214, 102, 0) 70%);
+      }
+
+      .content {
+        position: relative;
+        z-index: 2;
+        height: 100%;
+        padding: 60px 0 60px 76px;
+        display: flex;
+        align-items: center;
+        gap: 54px;
+      }
+
+      .left {
+        width: 660px;
+        flex: none;
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 11px;
+        margin-bottom: 32px;
+      }
+
+      .brand img {
+        width: 38px;
+        height: 38px;
+        border-radius: 10px;
+        display: block;
+      }
+
+      .brand span {
+        font-size: 22px;
+        font-weight: 750;
+        letter-spacing: 0.2px;
+      }
+
+      h1 {
+        font-size: 50px;
+        line-height: 1.26;
+        font-weight: 800;
+        letter-spacing: -1.6px;
+      }
+
+      h1 em {
+        font-style: normal;
+        color: #b57b00;
+      }
+
+      .sub {
+        margin-top: 20px;
+        font-size: 17px;
+        line-height: 1.7;
+        color: #7d6c3f;
+        max-width: 560px;
+      }
+
+      .features {
+        margin-top: 34px;
+        display: flex;
+        gap: 28px;
+      }
+
+      .feature {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 15px;
+        font-weight: 600;
+        color: #5c4f2a;
+      }
+
+      .feature i {
+        width: 19px;
+        height: 19px;
+        border-radius: 50%;
+        background: #1f2328;
+        color: #fff;
+        font-style: normal;
+        font-size: 11px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex: none;
+      }
+
+      /* 右侧真实界面截图 */
+      .shot-wrap {
+        position: relative;
+        flex: 1;
+        height: 100%;
+        display: flex;
+        align-items: center;
+      }
+
+      .shot {
+        width: 592px;
+        height: 370px;
+        border-radius: 16px;
+        overflow: hidden;
+        background: #fff;
+        box-shadow: 0 30px 70px rgba(120, 82, 0, 0.26), 0 8px 20px rgba(120, 82, 0, 0.12);
+        margin-left: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.7);
+      }
+
+      .shot img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: 50% 42%;
+        display: block;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="glow"></div>
+    <div class="glow-2"></div>
+
+    <div class="content">
+      <div class="left">
+        <div class="brand">
+          <img src="../../assets/icons/icon128.png" alt="" />
+          <span>WebNote</span>
+        </div>
+
+        <h1>在网页上划词高亮<br />写下<em>只有自己看得见</em>的批注</h1>
+
+        <p class="sub">
+          像在纸质书上做记号一样。所有内容只保存在你的浏览器里，
+          不上传、不需要登录，也不用担心被别人看到。
+        </p>
+
+        <div class="features">
+          <span class="feature"><i>✓</i>划词即标</span>
+          <span class="feature"><i>✓</i>标签层级整理</span>
+          <span class="feature"><i>✓</i>正文快照备份</span>
+        </div>
+      </div>
+
+      <div class="shot-wrap">
+        <div class="shot"><img src="{{SHOT}}" alt="" /></div>
+      </div>
+    </div>
+  </body>
+</html>

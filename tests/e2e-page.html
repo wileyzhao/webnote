@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <title>大模型推理成本一年下降十倍，工程侧发生了什么</title>
+    <style>
+      body {
+        font-family: -apple-system, "PingFang SC", sans-serif;
+        max-width: 720px;
+        margin: 40px auto;
+        padding: 0 20px;
+        line-height: 1.8;
+        color: #222;
+      }
+      h1 { font-size: 26px; margin-bottom: 6px; }
+      .meta { color: #888; font-size: 13px; margin-bottom: 28px; }
+      p { margin: 16px 0; font-size: 16px; }
+      .card { border: 1px solid #eee; padding: 16px; border-radius: 8px; }
+    </style>
+  </head>
+  <body>
+    <article id="doc">
+      <h1>大模型推理成本一年下降十倍，工程侧发生了什么</h1>
+      <div class="meta">2025-11-05 · 架构 · 阅读 8921</div>
+
+      <p id="para1">
+        过去一年，推理侧的单位 token 成本下降了接近一个数量级。这个变化并不是单一技术突破带来的，
+        而是模型结构、量化、KV Cache 管理、批处理调度和硬件利用率共同作用的结果。
+      </p>
+
+      <p id="para2">
+        先看最容易被忽视的一环：<em>批处理调度</em>。连续批处理（continuous batching）把请求的调度粒度
+        从「整批」下沉到「单步」，让 GPU 在等待某个请求生成时不会空转，实际吞吐提升往往在两倍以上。
+      </p>
+
+      <p id="para3">
+        其次是 KV Cache 的显存管理。分页式 KV Cache 借鉴了操作系统虚拟内存的思路，
+        把显存切成固定大小的块按需分配，显存碎片率显著下降，能同时挂载的会话数也随之上升。
+      </p>
+
+      <p id="para4">
+        这些优化叠加起来，才让「每百万 token 几块钱」成为可能。便宜下来的推理，
+        又反过来改变了产品设计——长上下文、多轮反思、批量生成，都不再是奢侈品。
+      </p>
+    </article>
+
+    <div class="card">
+      <strong>测试说明</strong>
+      <p style="font-size: 14px; margin: 8px 0 0">
+        这段文字用于验证 WebNote 插件的划词高亮与批注功能。选中任意文字即可看到浮动工具条。
+      </p>
+    </div>
+  </body>
+</html>

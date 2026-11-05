@@ -1,0 +1,34 @@
+/*
+ * WebNote — 页面级高亮样式
+ * CSS Custom Highlight API 只能通过 ::highlight() 伪元素上色。
+ */
+
+::highlight(wn-yellow) {
+  background-color: rgba(242, 195, 61, 0.42);
+}
+
+::highlight(wn-green) {
+  background-color: rgba(63, 185, 80, 0.34);
+}
+
+::highlight(wn-blue) {
+  background-color: rgba(75, 147, 247, 0.32);
+}
+
+::highlight(wn-pink) {
+  background-color: rgba(236, 106, 156, 0.32);
+}
+
+::highlight(wn-purple) {
+  background-color: rgba(155, 123, 240, 0.34);
+}
+
+::highlight(wn-hover) {
+  background-color: rgba(15, 23, 42, 0.13);
+}
+
+@media (prefers-color-scheme: dark) {
+  ::highlight(wn-hover) {
+    background-color: rgba(255, 255, 255, 0.16);
+  }
+}

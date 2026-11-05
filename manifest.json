@@ -1,0 +1,73 @@
+{
+  "manifest_version": 3,
+  "name": "WebNote",
+  "version": "1.0.1",
+  "description": "在任意网页上划词高亮、写下私人批注，并按标签整理成自己的阅读笔记库。数据只存在本地，不上传、不需要登录。",
+  "minimum_chrome_version": "111",
+  "icons": {
+    "16": "assets/icons/icon16.png",
+    "32": "assets/icons/icon32.png",
+    "48": "assets/icons/icon48.png",
+    "128": "assets/icons/icon128.png"
+  },
+  "action": {
+    "default_title": "WebNote",
+    "default_popup": "src/popup/popup.html",
+    "default_icon": {
+      "16": "assets/icons/icon16.png",
+      "32": "assets/icons/icon32.png",
+      "48": "assets/icons/icon48.png",
+      "128": "assets/icons/icon128.png"
+    }
+  },
+  "background": {
+    "service_worker": "src/background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "http://*/*",
+        "https://*/*"
+      ],
+      "js": [
+        "src/shared/model.js",
+        "src/shared/store.js",
+        "src/content/anchor.js",
+        "src/content/highlight.js",
+        "src/content/ui.js",
+        "src/content/content.js"
+      ],
+      "css": [
+        "src/content/content.css"
+      ],
+      "run_at": "document_idle",
+      "all_frames": false
+    }
+  ],
+  "permissions": [
+    "storage",
+    "contextMenus",
+    "unlimitedStorage",
+    "clipboardWrite"
+  ],
+  "host_permissions": [
+    "http://*/*",
+    "https://*/*"
+  ],
+  "commands": {
+    "highlight-selection": {
+      "suggested_key": {
+        "default": "Alt+Shift+H",
+        "mac": "Alt+Shift+H"
+      },
+      "description": "高亮当前选中文字"
+    },
+    "note-selection": {
+      "suggested_key": {
+        "default": "Alt+Shift+M",
+        "mac": "Alt+Shift+M"
+      },
+      "description": "为当前选中文字写批注"
+    }
+  }
+}

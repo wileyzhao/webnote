@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WebNote</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <div class="app">
+      <header class="hd">
+        <div class="brand">
+          <img src="../../assets/icons/icon32.png" alt="" class="logo" />
+          <div class="brand-text">
+            <div class="name">WebNote</div>
+            <div class="sub" id="statusText">本地高亮与批注</div>
+          </div>
+        </div>
+        <label class="switch" title="一键开启 / 关闭">
+          <input type="checkbox" id="toggleEnabled" />
+          <span class="slider"></span>
+        </label>
+      </header>
+
+      <section class="page">
+        <div class="page-title" id="pageTitle">—</div>
+        <div class="page-url" id="pageUrl"></div>
+        <div class="page-meta">
+          <span class="count" id="countText">0 条标注</span>
+          <button class="link" id="btnSave">保存本页</button>
+        </div>
+      </section>
+
+      <div class="hint" id="hint" hidden></div>
+
+      <ul class="list" id="list"></ul>
+      <div class="empty" id="empty" hidden>
+        <div class="empty-icon">✎</div>
+        <div class="empty-title">还没有标注</div>
+        <div class="empty-sub">在网页上选中文字，即可高亮或写批注</div>
+      </div>
+
+      <footer class="ft">
+        <button class="primary" id="btnDashboard">管理页 · 标签库</button>
+        <button class="ghost" id="btnSiteToggle">本站禁用</button>
+      </footer>
+    </div>
+
+    <script src="../shared/model.js"></script>
+    <script src="../shared/store.js"></script>
+    <script src="popup.js"></script>
+  </body>
+</html>
