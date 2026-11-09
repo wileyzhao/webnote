@@ -13,10 +13,10 @@
           <img src="../../assets/icons/icon32.png" alt="" class="logo" />
           <div class="brand-text">
             <div class="name">WebNote</div>
-            <div class="sub" id="statusText">本地高亮与批注</div>
+            <div class="sub" id="statusText" data-i18n="popup.status.normal">本地高亮与批注</div>
           </div>
         </div>
-        <label class="switch" title="一键开启 / 关闭">
+        <label class="switch" data-i18n-title="popup.toggleTitle" title="一键开启 / 关闭">
           <input type="checkbox" id="toggleEnabled" />
           <span class="slider"></span>
         </label>
@@ -26,8 +26,8 @@
         <div class="page-title" id="pageTitle">—</div>
         <div class="page-url" id="pageUrl"></div>
         <div class="page-meta">
-          <span class="count" id="countText">0 条标注</span>
-          <button class="link" id="btnSave">保存本页</button>
+          <span class="count" id="countText"></span>
+          <button class="link" id="btnSave"></button>
         </div>
       </section>
 
@@ -36,16 +36,17 @@
       <ul class="list" id="list"></ul>
       <div class="empty" id="empty" hidden>
         <div class="empty-icon">✎</div>
-        <div class="empty-title">还没有标注</div>
-        <div class="empty-sub">在网页上选中文字，即可高亮或写批注</div>
+        <div class="empty-title" data-i18n="popup.emptyTitle">还没有标注</div>
+        <div class="empty-sub" data-i18n="popup.emptySub">在网页上选中文字，即可高亮或写批注</div>
       </div>
 
       <footer class="ft">
-        <button class="primary" id="btnDashboard">管理页 · 标签库</button>
-        <button class="ghost" id="btnSiteToggle">本站禁用</button>
+        <button class="primary" id="btnDashboard" data-i18n="popup.dashboard">管理页 · 标签库</button>
+        <button class="ghost" id="btnSiteToggle"></button>
       </footer>
     </div>
 
+    <script src="../shared/i18n.js"></script>
     <script src="../shared/model.js"></script>
     <script src="../shared/store.js"></script>
     <script src="popup.js"></script>

@@ -25,6 +25,7 @@ TARGETS = {
     "screenshot-2.png": (1280, 800),
     "screenshot-3.png": (1280, 800),
     "screenshot-4.png": (1280, 800),
+    "screenshot-5.png": (1280, 800),
     "promo-440x280.png": (440, 280),
     "promo-1400x560.png": (1400, 560),
 }

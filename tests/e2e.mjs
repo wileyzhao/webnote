@@ -180,6 +180,21 @@ try {
 
   // 安装时会自动打开管理页，先关掉以免干扰
   await sleep(1200);
+
+  // 固定界面语言为中文，保证后面的文案断言稳定
+  const swBoot = await findTarget((t) => t.type === 'service_worker' && t.url.includes(extId));
+  if (swBoot) {
+    const boot = connect(swBoot.webSocketDebuggerUrl);
+    await boot.ready;
+    await evaluate(boot, `chrome.storage.local.get('webnote:v1').then((r) => {
+      const st = r['webnote:v1'] || { version: 1, pages: {}, tags: [], settings: {} };
+      st.settings = Object.assign({}, st.settings, { locale: 'zh-CN' });
+      return chrome.storage.local.set({ 'webnote:v1': st }).then(() => 1);
+    })`);
+    boot.close();
+    await sleep(400);
+  }
+
   const early = await listTargets();
   for (const t of early) {
     if (t.type === 'page' && t.url.indexOf(extId) >= 0) {
@@ -397,7 +412,7 @@ try {
         anns: document.querySelectorAll('.ann').length,
         treeRows: document.querySelectorAll('.tag-row').length,
         viewTitle: (document.getElementById('viewTitle') || {}).textContent || '',
-        hasSnapshotBtn: Array.from(document.querySelectorAll('.mini-btn')).some((b) => b.textContent === '正文快照')
+        hasSnapshotBtn: !!document.querySelector('.mini-btn[data-act="snapshot"]')
       }))()`
     );
     check('渲染出页面卡片', dashInfo.cards === 1, dashInfo.cards);

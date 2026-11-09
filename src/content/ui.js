@@ -8,6 +8,14 @@
   const WN = (root.WN = root.WN || {});
   const M = WN.model;
 
+  function t(key, params) {
+    try {
+      return WN.i18n ? WN.i18n.t(key, params) : key;
+    } catch (err) {
+      return key;
+    }
+  }
+
   const HOST_ID = '__webnote_host__';
 
   const ICON = {
@@ -215,13 +223,13 @@
   const HTML = `
     <div class="layer">
       <div class="surface tb" data-el="toolbar" hidden>
-        <button class="sw" data-color="yellow" title="黄色高亮"></button>
-        <button class="sw" data-color="green" title="绿色高亮"></button>
-        <button class="sw" data-color="blue" title="蓝色高亮"></button>
-        <button class="sw" data-color="pink" title="粉色高亮"></button>
-        <button class="sw" data-color="purple" title="紫色高亮"></button>
+        <button class="sw" data-color="yellow"></button>
+        <button class="sw" data-color="green"></button>
+        <button class="sw" data-color="blue"></button>
+        <button class="sw" data-color="pink"></button>
+        <button class="sw" data-color="purple"></button>
         <span class="sep"></span>
-        <button class="tb-act" data-act="compose">${ICON.note}<span>批注</span></button>
+        <button class="tb-act" data-act="compose" data-i18n-title="toolbar.composeTitle">${ICON.note}<span data-i18n="toolbar.compose"></span></button>
       </div>
 
       <div class="surface card" data-el="card" hidden>
@@ -229,21 +237,21 @@
           <span class="dot" data-el="dot"></span>
           <span class="meta" data-el="meta"></span>
           <div class="tools">
-            <button class="icon-btn" data-act="edit" title="编辑批注">${ICON.edit}</button>
-            <button class="icon-btn danger" data-act="delete" title="删除标注">${ICON.trash}</button>
-            <button class="icon-btn" data-act="close" title="关闭">${ICON.close}</button>
+            <button class="icon-btn" data-act="edit" data-i18n-title="card.edit">${ICON.edit}</button>
+            <button class="icon-btn danger" data-act="delete" data-i18n-title="card.delete">${ICON.trash}</button>
+            <button class="icon-btn" data-act="close" data-i18n-title="card.close">${ICON.close}</button>
           </div>
         </div>
         <div class="card-scroll" data-el="scroll">
           <blockquote class="quote" data-el="quote"></blockquote>
           <div class="note" data-el="note"></div>
-          <textarea class="editor" data-el="input" hidden placeholder="写下你的想法…（⌘/Ctrl + Enter 保存）"></textarea>
+          <textarea class="editor" data-el="input" hidden data-i18n-placeholder="card.placeholder"></textarea>
         </div>
         <div class="card-foot">
           <div class="colors" data-el="colors"></div>
           <div class="foot-actions">
-            <button class="btn" data-act="cancel" hidden>取消</button>
-            <button class="btn primary" data-act="save" hidden>保存</button>
+            <button class="btn" data-act="cancel" hidden data-i18n="card.cancel"></button>
+            <button class="btn primary" data-act="save" hidden data-i18n="card.save"></button>
           </div>
         </div>
       </div>
@@ -300,6 +308,7 @@
     buildColorPickers();
     bindEvents();
     mounted = true;
+    refreshI18n();
   }
 
   function unmount() {
@@ -312,20 +321,50 @@
   }
 
   function buildColorPickers() {
-    const swatch = (color, extraClass) =>
-      '<button class="sw ' + (extraClass || '') + '" data-color="' + color + '" title="' +
-      (M.COLORS.find((c) => c.id === color) || {}).label + '"></button>';
+    els.colors.innerHTML = M.COLORS.map(
+      (c) => '<button class="sw" data-color="' + c.id + '"></button>'
+    ).join('');
 
-    els.colors.innerHTML = M.COLORS.map((c) => swatch(c.id)).join('');
     M.COLORS.forEach((c) => {
       const btn = els.colors.querySelector('[data-color="' + c.id + '"]');
-      if (btn) btn.style.setProperty('--sw', c.hex);
+      if (btn) {
+        btn.style.setProperty('--sw', c.hex);
+        btn.title = t('color.' + c.id);
+      }
     });
 
     Array.from(els.toolbar.querySelectorAll('.sw')).forEach((btn) => {
       const color = M.COLORS.find((c) => c.id === btn.getAttribute('data-color'));
-      if (color) btn.style.setProperty('--sw', color.hex);
+      if (color) {
+        btn.style.setProperty('--sw', color.hex);
+        btn.title = t('color.highlight', { color: t('color.' + color.id) });
+      }
     });
+  }
+
+  /** 语言切换后重新套用文案（不重建 DOM，保留当前打开状态） */
+  function refreshI18n() {
+    if (!shadow || !mounted) return;
+    try {
+      WN.i18n.applyI18n(shadow);
+    } catch (err) {
+      /* 忽略 */
+    }
+    buildColorPickers();
+
+    if (current) {
+      setDotColor(current.color);
+      if (els.card && !els.card.hidden) {
+        const editing = els.input && !els.input.hidden;
+        if (editing) {
+          els.meta.textContent = current.id ? t('card.editing') : t('card.newNote');
+        } else {
+          els.meta.textContent =
+            WN.util.relativeTime(current.createdAt) + ' · ' + t('card.annotated');
+        }
+        renderNoteView();
+      }
+    }
   }
 
   // ------------------------------------------------------------ 事件
@@ -521,8 +560,8 @@
 
     els.quote.textContent = current.quote;
     els.meta.textContent = current.id
-      ? WN.util.relativeTime(current.createdAt) + ' · 已标注'
-      : '新建标注';
+      ? WN.util.relativeTime(current.createdAt) + ' · ' + t('card.annotated')
+      : t('card.newNote');
 
     setDotColor(current.color);
     renderNoteView();
@@ -533,7 +572,7 @@
 
   function renderNoteView() {
     const note = (current && current.note) || '';
-    els.note.textContent = note || '还没有写批注';
+    els.note.textContent = note || t('card.noNote');
     els.note.classList.toggle('empty', !note);
   }
 
@@ -552,9 +591,9 @@
 
     els.meta.textContent = editing
       ? current.id
-        ? '编辑批注'
-        : '新建批注'
-      : WN.util.relativeTime(current.createdAt) + ' · 已标注';
+        ? t('card.editing')
+        : t('card.newNote')
+      : WN.util.relativeTime(current.createdAt) + ' · ' + t('card.annotated');
 
     if (editing) {
       els.input.value = current.note || '';
@@ -608,7 +647,7 @@
     const save = current.onSave;
     const isNew = !current.id;
 
-    els.meta.textContent = '保存中…';
+    els.meta.textContent = t('card.saving');
     try {
       if (save) await save(payload);
       current.note = note;
@@ -618,10 +657,10 @@
         renderNoteView();
         setMode('view');
       }
-      toast(isNew ? (note ? '已添加批注' : '已高亮') : '已更新');
+      toast(isNew ? (note ? t('card.added') : t('card.highlighted')) : t('card.updated'));
     } catch (err) {
-      els.meta.textContent = '保存失败，请重试';
-      toast((err && err.message) || '保存失败', true);
+      els.meta.textContent = t('card.saveFailedRetry');
+      toast((err && err.message) || t('error.saveFailed'), true);
     }
   }
 
@@ -631,9 +670,9 @@
     try {
       if (del) await del();
       closeCard();
-      toast('已删除标注');
+      toast(t('card.deleted'));
     } catch (err) {
-      toast((err && err.message) || '删除失败', true);
+      toast((err && err.message) || t('card.deleteFailed'), true);
     }
   }
 
@@ -670,6 +709,7 @@
     isCardOpen: isCardOpen,
     toast: toast,
     setTheme: setTheme,
+    refreshI18n: refreshI18n,
     setBlankClickHandler: setBlankClickHandler
   };
 })(typeof self !== 'undefined' ? self : globalThis);

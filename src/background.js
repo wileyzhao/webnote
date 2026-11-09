@@ -4,9 +4,13 @@
  * 2) 右键菜单 / 快捷键
  * 3) 给已打开的标签页补注入 content script
  */
-importScripts('shared/model.js', 'shared/store.js');
+importScripts('shared/i18n.js', 'shared/model.js', 'shared/store.js');
 
 const M = self.WN.model;
+function t(key, params) {
+  return self.WN.i18n.t(key, params);
+}
+
 const MENU = {
   SAVE: 'wn-save-page',
   ANNOTATE: 'wn-annotate',
@@ -16,6 +20,7 @@ const MENU = {
 };
 
 const CONTENT_FILES = [
+  'src/shared/i18n.js',
   'src/shared/model.js',
   'src/shared/store.js',
   'src/content/anchor.js',
@@ -54,53 +59,61 @@ async function applyMutation(op, payload) {
 
 // ------------------------------------------------------------------ 右键菜单
 
-function buildMenus() {
-  chrome.contextMenus.removeAll(() => {
-    chrome.contextMenus.create({
-      id: MENU.SAVE,
-      title: '保存本页到 WebNote',
-      contexts: ['page']
-    });
+async function buildMenus() {
+  const stored = await chrome.storage.local.get(M.STORAGE_KEY);
+  const state = M.normalizeState(stored[M.STORAGE_KEY]);
+  self.WN.i18n.setLocale(state.settings.locale);
 
-    chrome.contextMenus.create({
-      id: MENU.ANNOTATE,
-      title: '标注选中文字',
-      contexts: ['selection']
-    });
-
-    M.COLORS.forEach((color) => {
+  await new Promise((resolve) => {
+    chrome.contextMenus.removeAll(() => {
       chrome.contextMenus.create({
-        id: MENU.COLOR + color.id,
-        parentId: MENU.ANNOTATE,
-        title: color.label + '高亮',
+        id: MENU.SAVE,
+        title: t('menu.savePage'),
+        contexts: ['page']
+      });
+
+      chrome.contextMenus.create({
+        id: MENU.ANNOTATE,
+        title: t('menu.annotate'),
         contexts: ['selection']
       });
-    });
 
-    chrome.contextMenus.create({
-      id: 'wn-sep-1',
-      parentId: MENU.ANNOTATE,
-      type: 'separator',
-      contexts: ['selection']
-    });
+      M.COLORS.forEach((color) => {
+        chrome.contextMenus.create({
+          id: MENU.COLOR + color.id,
+          parentId: MENU.ANNOTATE,
+          title: t('color.highlight', { color: t('color.' + color.id) }),
+          contexts: ['selection']
+        });
+      });
 
-    chrome.contextMenus.create({
-      id: MENU.NOTE,
-      parentId: MENU.ANNOTATE,
-      title: '写批注…',
-      contexts: ['selection']
-    });
+      chrome.contextMenus.create({
+        id: 'wn-sep-1',
+        parentId: MENU.ANNOTATE,
+        type: 'separator',
+        contexts: ['selection']
+      });
 
-    chrome.contextMenus.create({
-      id: 'wn-sep-2',
-      type: 'separator',
-      contexts: ['page']
-    });
+      chrome.contextMenus.create({
+        id: MENU.NOTE,
+        parentId: MENU.ANNOTATE,
+        title: t('menu.note'),
+        contexts: ['selection']
+      });
 
-    chrome.contextMenus.create({
-      id: MENU.DASH,
-      title: '打开 WebNote 管理页',
-      contexts: ['page']
+      chrome.contextMenus.create({
+        id: 'wn-sep-2',
+        type: 'separator',
+        contexts: ['page']
+      });
+
+      chrome.contextMenus.create({
+        id: MENU.DASH,
+        title: t('menu.dashboard'),
+        contexts: ['page']
+      });
+
+      resolve();
     });
   });
 }
@@ -179,6 +192,15 @@ chrome.runtime.onInstalled.addListener(async (details) => {
 
 chrome.runtime.onStartup.addListener(() => {
   buildMenus();
+});
+
+// 用户切换界面语言后，右键菜单需要重建
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area !== 'local' || !changes[M.STORAGE_KEY]) return;
+  const next = M.normalizeState(changes[M.STORAGE_KEY].newValue);
+  if (self.WN.i18n.getLocale() !== self.WN.i18n.resolve(next.settings.locale)) {
+    buildMenus();
+  }
 });
 
 chrome.contextMenus.onClicked.addListener(async (info, tab) => {

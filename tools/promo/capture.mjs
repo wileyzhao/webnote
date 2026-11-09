@@ -278,6 +278,7 @@ try {
     const sw = connect(swT.webSocketDebuggerUrl);
     await sw.ready;
     const sample = buildSample(Date.now(), 86400000);
+    sample.settings.locale = 'zh-CN';
     await ev(sw, `chrome.storage.local.set({'webnote:v1': ${JSON.stringify(sample)}}).then(() => 1)`);
     sw.close();
   }
@@ -287,6 +288,11 @@ try {
   await sleep(2200);
   await ev(dash, `document.querySelectorAll('.card-foot').forEach((e) => e.style.opacity = '1')`);
   await shot(dash, 'screenshot-4');
+
+  // 5) 设置面板：语言切换 + 数据只在本机
+  await ev(dash, `document.getElementById('btnSettings').click()`);
+  await sleep(900);
+  await shot(dash, 'screenshot-5');
   dash.close();
   page.close();
 

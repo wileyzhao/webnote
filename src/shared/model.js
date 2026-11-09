@@ -14,13 +14,22 @@
 
   /** 标注配色。id 会写进 CSS 的 ::highlight(wn-xxx) 选择器，勿随意改动。 */
   const COLORS = [
-    { id: 'yellow', label: '黄色', hex: '#f2c33d' },
-    { id: 'green', label: '绿色', hex: '#3fb950' },
-    { id: 'blue', label: '蓝色', hex: '#4b93f7' },
-    { id: 'pink', label: '粉色', hex: '#ec6a9c' },
-    { id: 'purple', label: '紫色', hex: '#9b7bf0' }
+    { id: 'yellow', hex: '#f2c33d' },
+    { id: 'green', hex: '#3fb950' },
+    { id: 'blue', hex: '#4b93f7' },
+    { id: 'pink', hex: '#ec6a9c' },
+    { id: 'purple', hex: '#9b7bf0' }
   ];
   const COLOR_IDS = COLORS.map((c) => c.id);
+
+  /** 本地化辅助：i18n 模块缺失时降级为 key 本身 */
+  function msg(key, params) {
+    try {
+      return WN.i18n ? WN.i18n.t(key, params) : key;
+    } catch (err) {
+      return key;
+    }
+  }
   /** 新建标签时按这个顺序轮换默认色 */
   const TAG_PALETTE = ['blue', 'green', 'purple', 'pink', 'yellow'];
 
@@ -36,6 +45,8 @@
     autoOpenNote: false,
     /** 保存页面时顺带存一份正文纯文本快照 */
     saveSnapshot: true,
+    /** 界面语言：auto 表示跟随浏览器 */
+    locale: 'auto',
     theme: 'auto'
   };
 
@@ -101,6 +112,7 @@
     s.showToolbar = s.showToolbar !== false;
     s.autoOpenNote = s.autoOpenNote === true;
     s.saveSnapshot = s.saveSnapshot !== false;
+    if (['auto', 'zh-CN', 'en', 'ja', 'fr', 'de', 'es'].indexOf(s.locale) < 0) s.locale = 'auto';
     return s;
   }
 
@@ -267,7 +279,7 @@
 
   function ensurePage(state, info) {
     const url = normalizeUrl(info && info.url);
-    if (!url) throw new Error('无效的页面地址');
+    if (!url) throw new Error(msg('error.invalidUrl'));
     let page = state.pages[url];
     if (!page) {
       page = normalizePage({
@@ -315,7 +327,7 @@
       case 'addAnnotation': {
         const page = ensurePage(state, p);
         const ann = normalizeAnnotation(p.annotation);
-        if (!ann) throw new Error('选区内容为空，无法标注');
+        if (!ann) throw new Error(msg('error.emptySelection'));
         const twin = page.annotations.find((a) => a.start === ann.start && a.end === ann.end);
         if (twin) {
           twin.color = ann.color;
@@ -331,9 +343,9 @@
 
       case 'updateAnnotation': {
         const page = findPage(state, p.url);
-        if (!page) throw new Error('页面尚未保存');
+        if (!page) throw new Error(msg('error.pageNotSaved'));
         const ann = page.annotations.find((a) => a.id === p.id);
-        if (!ann) throw new Error('标注不存在');
+        if (!ann) throw new Error(msg('error.annotationNotFound'));
         const patch = isObject(p.patch) ? p.patch : {};
         if (typeof patch.note === 'string') ann.note = patch.note.slice(0, 8000);
         if (COLOR_IDS.indexOf(patch.color) >= 0) ann.color = patch.color;
@@ -361,11 +373,11 @@
 
       case 'addTag': {
         const name = str(p.name).trim();
-        if (!name) throw new Error('标签名不能为空');
+        if (!name) throw new Error(msg('error.tagNameEmpty'));
         let parentId = p.parentId || null;
         if (parentId && !getTag(state.tags, parentId)) parentId = null;
         const sameLevel = state.tags.find((t) => (t.parentId || null) === parentId && t.name === name);
-        if (sameLevel) throw new Error('同一层已经有叫「' + name + '」的标签了');
+        if (sameLevel) throw new Error(msg('error.tagDuplicate', { name: name }));
         const siblings = childrenOf(state.tags, parentId);
         // 没指定颜色时按调色板轮换，让标签树自带层次感
         const color = COLOR_IDS.indexOf(p.color) >= 0 ? p.color : TAG_PALETTE[state.tags.length % TAG_PALETTE.length];
@@ -381,21 +393,21 @@
 
       case 'renameTag': {
         const tag = getTag(state.tags, p.id);
-        if (!tag) throw new Error('标签不存在');
+        if (!tag) throw new Error(msg('error.tagNotFound'));
         const name = str(p.name).trim();
-        if (!name) throw new Error('标签名不能为空');
+        if (!name) throw new Error(msg('error.tagNameEmpty'));
         tag.name = name.slice(0, 60);
         return { tag: tag };
       }
 
       case 'moveTag': {
         const tag = getTag(state.tags, p.id);
-        if (!tag) throw new Error('标签不存在');
+        if (!tag) throw new Error(msg('error.tagNotFound'));
         const target = p.parentId || null;
-        if (target && !getTag(state.tags, target)) throw new Error('目标标签不存在');
+        if (target && !getTag(state.tags, target)) throw new Error(msg('error.targetTagNotFound'));
         if (target) {
           const banned = tagSubtreeIds(state.tags, tag.id);
-          if (banned.indexOf(target) >= 0) throw new Error('不能把标签移动到它自己或它的子标签下');
+          if (banned.indexOf(target) >= 0) throw new Error(msg('error.tagCycle'));
         }
         tag.parentId = target;
         const siblings = childrenOf(state.tags, target).filter((t) => t.id !== tag.id);
@@ -405,23 +417,23 @@
 
       case 'updateTag': {
         const tag = getTag(state.tags, p.id);
-        if (!tag) throw new Error('标签不存在');
+        if (!tag) throw new Error(msg('error.tagNotFound'));
         if (typeof p.name === 'string') {
           const name = p.name.trim();
-          if (!name) throw new Error('标签名不能为空');
+          if (!name) throw new Error(msg('error.tagNameEmpty'));
           const targetParent = p.parentId !== undefined ? p.parentId || null : tag.parentId || null;
           const dup = state.tags.find(
             (t) => t.id !== tag.id && (t.parentId || null) === targetParent && t.name === name
           );
-          if (dup) throw new Error('同一层已经有叫「' + name + '」的标签了');
+          if (dup) throw new Error(msg('error.tagDuplicate', { name: name }));
           tag.name = name.slice(0, 60);
         }
         if (COLOR_IDS.indexOf(p.color) >= 0) tag.color = p.color;
         if (p.parentId !== undefined) {
           const target = p.parentId || null;
-          if (target && !getTag(state.tags, target)) throw new Error('目标标签不存在');
+          if (target && !getTag(state.tags, target)) throw new Error(msg('error.targetTagNotFound'));
           if (target && tagSubtreeIds(state.tags, tag.id).indexOf(target) >= 0) {
-            throw new Error('不能把标签移动到它自己或它的子标签下');
+            throw new Error(msg('error.tagCycle'));
           }
           if ((tag.parentId || null) !== target) {
             tag.parentId = target;
@@ -468,7 +480,7 @@
       }
 
       default:
-        throw new Error('未知操作: ' + op);
+        throw new Error(msg('error.unknownOp', { op: op }));
     }
   }
 

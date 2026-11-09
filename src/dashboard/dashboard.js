@@ -3,6 +3,7 @@
 
   const WN = window.WN;
   const M = WN.model;
+  const t = (key, params) => WN.i18n.t(key, params);
   const $ = (id) => document.getElementById(id);
 
   const state = {
@@ -102,7 +103,7 @@
     if (opts.tag) {
       const add = document.createElement('button');
       add.textContent = '＋';
-      add.title = '新建子标签';
+      add.title = t('dash.newSubTag');
       add.addEventListener('click', (e) => {
         e.stopPropagation();
         openTagModal({ parentId: opts.tag.id });
@@ -110,7 +111,7 @@
 
       const rename = document.createElement('button');
       rename.textContent = '✎';
-      rename.title = '编辑标签';
+      rename.title = t('dash.editTag');
       rename.addEventListener('click', (e) => {
         e.stopPropagation();
         openTagModal({ tag: opts.tag });
@@ -119,7 +120,7 @@
       const del = document.createElement('button');
       del.className = 'danger';
       del.textContent = '×';
-      del.title = '删除标签';
+      del.title = t('dash.deleteTag');
       del.addEventListener('click', (e) => {
         e.stopPropagation();
         removeTag(opts.tag);
@@ -146,10 +147,10 @@
     const untagged = pages.filter((p) => p.tagIds.length === 0).length;
 
     tree.appendChild(
-      createTreeRow({ id: '__all__', name: '全部页面', count: pages.length, depth: 0, hasChildren: false })
+      createTreeRow({ id: '__all__', name: t('dash.allPages'), count: pages.length, depth: 0, hasChildren: false })
     );
     tree.appendChild(
-      createTreeRow({ id: 'untagged', name: '未分类', count: untagged, depth: 0, hasChildren: false })
+      createTreeRow({ id: 'untagged', name: t('dash.untagged'), count: untagged, depth: 0, hasChildren: false })
     );
 
     const tags = state.snapshot.tags;
@@ -192,7 +193,10 @@
     const el = $('sideStats');
     el.innerHTML = '';
     const line = document.createElement('div');
-    line.innerHTML = '共 <b>' + totals.pages + '</b> 个页面 · <b>' + totals.annotations + '</b> 条标注';
+    line.innerHTML = t('dash.summary', {
+      pages: '<b>' + totals.pages + '</b>',
+      notes: '<b>' + totals.annotations + '</b>'
+    });
     el.appendChild(line);
   }
 
@@ -234,17 +238,17 @@
 
   function renderHeader(pages) {
     const tag = state.activeTag && state.activeTag !== 'untagged' ? M.getTag(state.snapshot.tags, state.activeTag) : null;
-    let title = '全部页面';
-    if (state.activeTag === 'untagged') title = '未分类';
+    let title = t('dash.allPages');
+    if (state.activeTag === 'untagged') title = t('dash.untagged');
     else if (tag) title = tag.name;
 
     $('viewTitle').textContent = title;
 
     const annotations = pages.reduce((sum, p) => sum + p.annotations.length, 0);
     const parts = [];
-    parts.push(pages.length + ' 个页面');
-    if (annotations) parts.push(annotations + ' 条标注');
-    if (state.search.trim()) parts.push('搜索「' + state.search.trim() + '」');
+    parts.push(t('dash.pagesCount', { n: pages.length }));
+    if (annotations) parts.push(t('dash.notesCount', { n: annotations }));
+    if (state.search.trim()) parts.push(t('dash.searching', { q: state.search.trim() }));
     $('viewSub').textContent = parts.join(' · ');
   }
 
@@ -307,7 +311,9 @@
     const stats = document.createElement('div');
     stats.className = 'card-stats';
     stats.innerHTML =
-      '<b>' + page.annotations.length + '</b> 条标注<br>' + WN.util.relativeTime(page.updatedAt);
+      t('dash.annCount', { n: '<b>' + page.annotations.length + '</b>' }) +
+      '<br>' +
+      WN.util.relativeTime(page.updatedAt);
 
     head.append(titleWrap, stats);
     card.appendChild(head);
@@ -345,7 +351,7 @@
       if (sorted.length > limit) {
         const more = document.createElement('button');
         more.className = 'ann-more';
-        more.textContent = '展开其余 ' + (sorted.length - limit) + ' 条';
+        more.textContent = t('dash.expandRest', { n: sorted.length - limit });
         more.addEventListener('click', () => {
           state.expandedCards.add(page.url);
           renderContents();
@@ -354,7 +360,7 @@
       } else if (expanded && sorted.length > 4) {
         const less = document.createElement('button');
         less.className = 'ann-more';
-        less.textContent = '收起';
+        less.textContent = t('dash.collapse');
         less.addEventListener('click', () => {
           state.expandedCards.delete(page.url);
           renderContents();
@@ -371,17 +377,20 @@
 
     const openBtn = document.createElement('button');
     openBtn.className = 'mini-btn';
-    openBtn.textContent = '打开原文';
+    openBtn.dataset.act = 'open';
+    openBtn.textContent = t('dash.openOriginal');
     openBtn.addEventListener('click', () => openPage(page.url, null));
 
     const tagBtn = document.createElement('button');
     tagBtn.className = 'mini-btn';
-    tagBtn.textContent = '编辑标签';
+    tagBtn.dataset.act = 'tags';
+    tagBtn.textContent = t('dash.editTags');
     tagBtn.addEventListener('click', () => openPageTagsModal(page));
 
     const delBtn = document.createElement('button');
     delBtn.className = 'mini-btn danger';
-    delBtn.textContent = '删除';
+    delBtn.dataset.act = 'delete';
+    delBtn.textContent = t('dash.delete');
     delBtn.addEventListener('click', () => removePage(page));
 
     foot.append(openBtn, tagBtn);
@@ -389,8 +398,9 @@
     if (page.snapshot) {
       const snapBtn = document.createElement('button');
       snapBtn.className = 'mini-btn';
-      snapBtn.textContent = '正文快照';
-      snapBtn.title = '查看保存时的页面正文纯文本';
+      snapBtn.dataset.act = 'snapshot';
+      snapBtn.textContent = t('dash.snapshot');
+      snapBtn.title = t('dash.snapshotTitle');
       snapBtn.addEventListener('click', () => openSnapshotModal(page));
       foot.append(snapBtn);
     }
@@ -404,7 +414,7 @@
   function createAnnRow(page, ann) {
     const row = document.createElement('div');
     row.className = 'ann';
-    row.title = '在原文中定位这条标注';
+    row.title = t('dash.locateHint');
 
     const bar = document.createElement('span');
     bar.className = 'bar';
@@ -457,25 +467,28 @@
 
     if (searching) {
       wrap.innerHTML =
-        '<div class="big">⌕</div><h2>没有匹配的内容</h2><p>换个关键词试试，搜索会同时匹配页面标题、网址、原文和批注。</p>';
+        '<div class="big">⌕</div><h2>' + t('dash.empty.searchTitle') + '</h2><p>' +
+        t('dash.empty.searchDesc') + '</p>';
       return wrap;
     }
 
     if (state.activeTag) {
       wrap.innerHTML =
-        '<div class="big">◇</div><h2>这个分类下还没有页面</h2><p>在右侧页面卡片上点击「编辑标签」，就能把页面归到这里。</p>';
+        '<div class="big">◇</div><h2>' + t('dash.empty.tagTitle') + '</h2><p>' +
+        t('dash.empty.tagDesc') + '</p>';
       return wrap;
     }
 
     if (!totals.pages) {
       wrap.innerHTML =
-        '<div class="big">✎</div><h2>还没有开始记录</h2>' +
-        '<p>打开任意网页，选中一段文字，就会出现高亮与批注入口。<br>' +
-        '也可以右键页面选择「保存本页到 WebNote」。</p>';
+        '<div class="big">✎</div><h2>' + t('dash.empty.firstTitle') + '</h2><p>' +
+        t('dash.empty.firstDesc') + '</p>';
       return wrap;
     }
 
-    wrap.innerHTML = '<div class="big">◇</div><h2>这里空着</h2><p>换一个分类看看。</p>';
+    wrap.innerHTML =
+      '<div class="big">◇</div><h2>' + t('dash.empty.genericTitle') + '</h2><p>' +
+      t('dash.empty.genericDesc') + '</p>';
     return wrap;
   }
 
@@ -527,25 +540,25 @@
 
   async function removePage(page) {
     const ok = await confirmDialog({
-      title: '删除这个页面？',
-      desc: '「' + (page.title || page.url) + '」的 ' + page.annotations.length + ' 条标注会一并删除，无法撤销。',
-      confirmText: '删除',
+      title: t('page.deleteTitle'),
+      desc: t('page.deleteDesc', { title: page.title || page.url, n: page.annotations.length }),
+      confirmText: t('page.deleteConfirm'),
       danger: true
     });
     if (!ok) return;
     await WN.store.mutate('deletePage', { url: page.url });
     state.expandedCards.delete(page.url);
     await refresh();
-    toast('已删除页面');
+    toast(t('page.deleted'));
   }
 
   async function removeTag(tag) {
     const count = Object.values(state.snapshot.pages).filter((p) => p.tagIds.indexOf(tag.id) >= 0).length;
     const ok = await confirmDialog({
-      title: '删除标签「' + tag.name + '」？',
+      title: t('tag.deleteTitle', { name: tag.name }),
       desc:
-        '它下面的子标签也会一起删除。标签里的 ' + count + ' 个页面不会被删除，只是不再属于这个分类。',
-      confirmText: '删除标签',
+        t('tag.deleteDesc', { n: count }),
+      confirmText: t('tag.deleteConfirm'),
       danger: true
     });
     if (!ok) return;
@@ -553,7 +566,7 @@
     if (state.activeTag === tag.id) state.activeTag = null;
     state.expanded.delete(tag.id);
     await refresh();
-    toast('已删除标签');
+    toast(t('tag.deleted'));
   }
 
   // ================================================================ 模态框
@@ -590,15 +603,15 @@
         modal.innerHTML =
           '<h3></h3><div class="desc"></div>' +
           '<div class="modal-actions">' +
-          '<button class="btn" data-act="cancel">取消</button>' +
+          '<button class="btn" data-act="cancel">' + t('modal.cancel') + '</button>' +
           '<button class="btn ' +
           (opts.danger ? 'danger' : 'primary') +
           '" data-act="ok"></button>' +
           '</div>';
-        modal.querySelector('h3').textContent = opts.title || '确认';
+        modal.querySelector('h3').textContent = opts.title || t('modal.confirm');
         modal.querySelector('.desc').textContent = opts.desc || '';
         const okBtn = modal.querySelector('[data-act="ok"]');
-        okBtn.textContent = opts.confirmText || '确定';
+        okBtn.textContent = opts.confirmText || t('modal.confirm');
         modal.querySelector('[data-act="cancel"]').addEventListener('click', () => {
           close();
           resolve(false);
@@ -617,13 +630,14 @@
 
     showModal((modal, close) => {
       modal.innerHTML =
-        '<h3>' + (editing ? '编辑标签' : '新建标签') + '</h3>' +
-        '<div class="field"><label>名称</label><input class="input" data-el="name" placeholder="例如：技术 / 产品 / 待读" maxlength="60"></div>' +
-        '<div class="field"><label>父标签</label><select class="input" data-el="parent"></select></div>' +
-        '<div class="field"><label>颜色</label><div class="color-row" data-el="colors"></div></div>' +
+        '<h3>' + (editing ? t('tag.edit') : t('tag.new')) + '</h3>' +
+        '<div class="field"><label>' + t('tag.name') + '</label>' +
+        '<input class="input" data-el="name" placeholder="' + t('tag.namePlaceholder') + '" maxlength="60"></div>' +
+        '<div class="field"><label>' + t('tag.parent') + '</label><select class="input" data-el="parent"></select></div>' +
+        '<div class="field"><label>' + t('tag.color') + '</label><div class="color-row" data-el="colors"></div></div>' +
         '<div class="modal-actions">' +
-        '<button class="btn" data-act="cancel">取消</button>' +
-        '<button class="btn primary" data-act="ok">' + (editing ? '保存' : '创建') + '</button>' +
+        '<button class="btn" data-act="cancel">' + t('modal.cancel') + '</button>' +
+        '<button class="btn primary" data-act="ok">' + (editing ? t('modal.save') : t('modal.create')) + '</button>' +
         '</div>';
 
       const nameInput = modal.querySelector('[data-el="name"]');
@@ -641,7 +655,7 @@
       const banned = new Set(editing ? M.tagSubtreeIds(state.snapshot.tags, editing.id) : []);
       const base = document.createElement('option');
       base.value = '';
-      base.textContent = '（作为一级标签）';
+      base.textContent = t('tag.parentNone');
       parentSelect.appendChild(base);
 
       const walk = (parentId, depth) => {
@@ -686,16 +700,16 @@
               parentId: parentId,
               color: pickedColor
             });
-            toast('标签已更新');
+            toast(t('tag.updated'));
           } else {
             await WN.store.mutate('addTag', { name: name, parentId: parentId, color: pickedColor });
-            toast('已创建标签');
+            toast(t('tag.created'));
           }
           if (parentId) state.expanded.add(parentId);
           close();
           await refresh();
         } catch (err) {
-          toast((err && err.message) || '操作失败', true);
+          toast((err && err.message) || t('error.operationFailed'), true);
         }
       };
 
@@ -711,26 +725,29 @@
     showModal((modal, close) => {
       modal.classList.add('wide');
       modal.innerHTML =
-        '<h3>正文快照</h3>' +
+        '<h3>' + t('snapshot.title') + '</h3>' +
         '<div class="desc" data-el="desc"></div>' +
         '<div class="snapshot" data-el="body"></div>' +
         '<div class="modal-actions">' +
-        '<button class="btn" data-act="copy">复制全文</button>' +
-        '<button class="btn primary" data-act="close">关闭</button>' +
+        '<button class="btn" data-act="copy">' + t('snapshot.copy') + '</button>' +
+        '<button class="btn primary" data-act="close">' + t('card.close') + '</button>' +
         '</div>';
 
       const text = page.snapshot || '';
       modal.querySelector('[data-el="desc"]').textContent =
-        (page.title || page.url) + ' · 约 ' + Math.max(1, Math.round(text.length / 1000)) + 'k 字';
+        t('snapshot.meta', {
+          title: page.title || page.url,
+          n: Math.max(1, Math.round(text.length / 1000))
+        });
       modal.querySelector('[data-el="body"]').textContent = text;
 
       modal.querySelector('[data-act="close"]').addEventListener('click', close);
       modal.querySelector('[data-act="copy"]').addEventListener('click', async () => {
         try {
           await navigator.clipboard.writeText(text);
-          toast('已复制正文');
+          toast(t('snapshot.copied'));
         } catch (err) {
-          toast('复制失败，请手动选择文本', true);
+          toast(t('error.copyFailed'), true);
         }
       });
     });
@@ -739,13 +756,13 @@
   function openPageTagsModal(page) {
     showModal((modal, close) => {
       modal.innerHTML =
-        '<h3>编辑页面标签</h3>' +
+        '<h3>' + t('tags.title') + '</h3>' +
         '<div class="desc" data-el="desc"></div>' +
         '<div class="tag-picker" data-el="picker"></div>' +
         '<div class="modal-actions">' +
-        '<button class="btn" data-act="new">新建标签</button>' +
-        '<button class="btn" data-act="cancel">取消</button>' +
-        '<button class="btn primary" data-act="ok">保存</button>' +
+        '<button class="btn" data-act="new">' + t('dash.newTag') + '</button>' +
+        '<button class="btn" data-act="cancel">' + t('modal.cancel') + '</button>' +
+        '<button class="btn primary" data-act="ok">' + t('modal.save') + '</button>' +
         '</div>';
 
       modal.querySelector('[data-el="desc"]').textContent = page.title || page.url;
@@ -755,7 +772,7 @@
       const tags = state.snapshot.tags;
 
       if (!tags.length) {
-        picker.innerHTML = '<div class="tag-pick-empty">还没有标签，先新建一个</div>';
+        picker.innerHTML = '<div class="tag-pick-empty">' + t('tags.empty') + '</div>';
       } else {
         const walk = (parentId, depth) => {
           M.childrenOf(tags, parentId).forEach((tag) => {
@@ -804,9 +821,9 @@
           });
           close();
           await refresh();
-          toast('标签已保存');
+          toast(t('tags.saved'));
         } catch (err) {
-          toast((err && err.message) || '保存失败', true);
+          toast((err && err.message) || t('error.saveFailed'), true);
         }
       });
     });
@@ -816,33 +833,47 @@
     const settings = state.snapshot.settings;
 
     showModal((modal, close) => {
+      const localeOptions = WN.i18n.LOCALES.map((item) => {
+        const label = item.id === 'auto' ? t('settings.languageAuto') : item.label;
+        return '<option value="' + item.id + '">' + label + '</option>';
+      }).join('');
+
       modal.innerHTML =
-        '<h3>设置</h3>' +
-        '<div class="desc">所有数据都保存在这台电脑的浏览器里，不会上传。</div>' +
+        '<h3>' + t('settings.title') + '</h3>' +
+        '<div class="desc">' + t('settings.desc') + '</div>' +
         '<div class="switch-row">' +
-        '<div><div class="label">启用 WebNote</div><div class="hint">关闭后所有网页都不再显示高亮与批注入口</div></div>' +
+        '<div><div class="label">' + t('settings.enabled') + '</div><div class="hint">' +
+        t('settings.enabledHint') + '</div></div>' +
         '<label class="mini-switch"><input type="checkbox" data-el="enabled"><span class="track"></span></label>' +
         '</div>' +
         '<div class="switch-row">' +
-        '<div><div class="label">选中文字后浮出工具条</div><div class="hint">关闭后仍可用右键菜单或快捷键标注</div></div>' +
+        '<div><div class="label">' + t('settings.toolbar') + '</div><div class="hint">' +
+        t('settings.toolbarHint') + '</div></div>' +
         '<label class="mini-switch"><input type="checkbox" data-el="toolbar"><span class="track"></span></label>' +
         '</div>' +
         '<div class="switch-row">' +
-        '<div><div class="label">保存时存一份正文快照</div><div class="hint">页面失效或改版后，仍能回看当时的文字</div></div>' +
+        '<div><div class="label">' + t('settings.snapshot') + '</div><div class="hint">' +
+        t('settings.snapshotHint') + '</div></div>' +
         '<label class="mini-switch"><input type="checkbox" data-el="snapshot"><span class="track"></span></label>' +
         '</div>' +
-        '<div class="field" style="margin-top:14px"><label>默认高亮颜色</label><div class="color-row" data-el="colors"></div></div>' +
+        '<div class="field" style="margin-top:16px"><label>' + t('settings.language') + '</label>' +
+        '<select class="input" data-el="locale">' + localeOptions + '</select>' +
+        '<div class="hint" style="margin-top:5px">' + t('settings.languageHint') + '</div></div>' +
+        '<div class="field" style="margin-top:14px"><label>' + t('settings.defaultColor') +
+        '</label><div class="color-row" data-el="colors"></div></div>' +
         '<div class="modal-actions" style="justify-content:space-between">' +
-        '<button class="btn danger" data-act="clear">清空全部数据</button>' +
-        '<button class="btn primary" data-act="ok">完成</button>' +
+        '<button class="btn danger" data-act="clear">' + t('settings.clear') + '</button>' +
+        '<button class="btn primary" data-act="ok">' + t('modal.done') + '</button>' +
         '</div>';
 
       const enabled = modal.querySelector('[data-el="enabled"]');
       const toolbar = modal.querySelector('[data-el="toolbar"]');
       const snapshotSwitch = modal.querySelector('[data-el="snapshot"]');
+      const localeSelect = modal.querySelector('[data-el="locale"]');
       enabled.checked = settings.enabled !== false;
       toolbar.checked = settings.showToolbar !== false;
       snapshotSwitch.checked = settings.saveSnapshot !== false;
+      localeSelect.value = settings.locale || 'auto';
 
       let pickedColor = settings.defaultColor || 'yellow';
       const colorRow = modal.querySelector('[data-el="colors"]');
@@ -850,7 +881,7 @@
         const dot = document.createElement('button');
         dot.className = 'color-dot' + (color.id === pickedColor ? ' active' : '');
         dot.style.background = color.hex;
-        dot.title = color.label;
+        dot.title = t('color.' + color.id);
         dot.addEventListener('click', () => {
           pickedColor = color.id;
           Array.from(colorRow.children).forEach((c) => c.classList.remove('active'));
@@ -866,13 +897,14 @@
               enabled: enabled.checked,
               showToolbar: toolbar.checked,
               saveSnapshot: snapshotSwitch.checked,
-              defaultColor: pickedColor
+              defaultColor: pickedColor,
+              locale: localeSelect.value
             }
           });
           await refresh();
-          toast('设置已保存');
+          toast(t('settings.saved'));
         } catch (err) {
-          toast((err && err.message) || '保存失败', true);
+          toast((err && err.message) || t('error.saveFailed'), true);
         }
       };
 
@@ -884,9 +916,9 @@
       modal.querySelector('[data-act="clear"]').addEventListener('click', async () => {
         close();
         const ok = await confirmDialog({
-          title: '清空全部数据？',
-          desc: '所有页面、标注和标签都会被删除，且无法恢复。建议先导出备份。',
-          confirmText: '确认清空',
+          title: t('settings.clearTitle'),
+          desc: t('settings.clearDesc'),
+          confirmText: t('settings.clearConfirm'),
           danger: true
         });
         if (!ok) return;
@@ -894,7 +926,7 @@
         state.activeTag = null;
         state.expandedCards.clear();
         await refresh();
-        toast('已清空全部数据');
+        toast(t('settings.cleared'));
       });
     });
   }
@@ -921,7 +953,7 @@
     a.click();
     a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 2000);
-    toast('已导出备份文件');
+    toast(t('export.done'));
   }
 
   async function importBackup(file) {
@@ -929,13 +961,13 @@
       const text = await file.text();
       const parsed = JSON.parse(text);
       if (!parsed || typeof parsed !== 'object' || !parsed.pages) {
-        throw new Error('文件格式不正确');
+        throw new Error(t('import.badFormat'));
       }
       const res = await WN.store.mutate('importMerge', { state: parsed });
       await refresh();
-      toast('已合并导入 ' + (res.pages || 0) + ' 个页面');
+      toast(t('import.done', { n: res.pages || 0 }));
     } catch (err) {
-      toast((err && err.message) || '导入失败', true);
+      toast((err && err.message) || t('import.failed'), true);
     }
   }
 
@@ -943,6 +975,8 @@
 
   async function refresh() {
     state.snapshot = await WN.store.readState();
+    WN.i18n.setLocale(state.snapshot.settings.locale);
+    WN.i18n.applyI18n(document);
     if (state.activeTag && state.activeTag !== 'untagged' && !M.getTag(state.snapshot.tags, state.activeTag)) {
       state.activeTag = null;
     }
@@ -984,6 +1018,8 @@
 
   async function init() {
     state.snapshot = await WN.store.readState();
+    WN.i18n.setLocale(state.snapshot.settings.locale);
+    WN.i18n.applyI18n(document);
     bind();
     render();
   }

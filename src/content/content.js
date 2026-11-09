@@ -9,6 +9,14 @@
 
   const WN = root.WN;
   const M = WN.model;
+
+  function t(key, params) {
+    try {
+      return WN.i18n ? WN.i18n.t(key, params) : key;
+    } catch (err) {
+      return key;
+    }
+  }
   const A = WN.anchor;
   const H = WN.highlight;
   const U = WN.ui;
@@ -96,7 +104,7 @@
     if (!result.supported) {
       if (!state.warned) {
         state.warned = true;
-        U.toast('当前 Chrome 版本不支持页面高亮，请升级到 105 以上');
+        U.toast(t('content.unsupported'));
       }
       return;
     }
@@ -114,6 +122,7 @@
   async function reload() {
     const snapshot = await WN.store.readState();
     state.settings = snapshot.settings;
+    WN.i18n.setLocale(state.settings.locale);
     state.page = snapshot.pages[state.url] || null;
     state.annotations = state.page ? state.page.annotations.slice() : [];
 
@@ -182,7 +191,7 @@
     U.showToolbar(bounds, {
       onColor: (color) => {
         createAnnotation(selector, color, '').catch((err) => {
-          U.toast((err && err.message) || '保存失败', true);
+          U.toast((err && err.message) || t('error.saveFailed'), true);
         });
         clearSelection();
       },
@@ -238,7 +247,7 @@
       }
     });
     await reload();
-    if (!res.merged) U.toast(note ? '已添加批注' : '已高亮');
+    if (!res.merged) U.toast(note ? t('content.savedNote') : t('content.savedHighlight'));
     return res;
   }
 
@@ -280,7 +289,7 @@
   async function focusAnnotation(id) {
     await reload();
     if (!H.has(id)) {
-      U.toast('这条标注在当前页面已经找不到了');
+      U.toast(t('content.annotationLost'));
       return;
     }
     H.scrollIntoView(id);
@@ -340,13 +349,17 @@
   function bindStorage() {
     WN.store.watch((snapshot) => {
       const wasEnabled = state.active;
+      const prevLocale = WN.i18n.getLocale();
       state.settings = snapshot.settings;
+      WN.i18n.setLocale(state.settings.locale);
+      const localeChanged = prevLocale !== WN.i18n.getLocale();
       state.page = snapshot.pages[state.url] || null;
       state.annotations = state.page ? state.page.annotations.slice() : [];
 
       if (isEnabledHere()) {
         if (!wasEnabled) activate();
         U.setTheme(state.settings.theme);
+        if (localeChanged) U.refreshI18n();
         renderAll();
       } else if (wasEnabled) {
         deactivate();
@@ -384,17 +397,17 @@
         case 'WN_SAVE_PAGE':
           (async () => {
             if (!isEnabledHere()) {
-              U.toast('WebNote 已在本站关闭，点击扩展图标可开启');
+              U.toast(t('content.disabledHere'));
               sendResponse({ ok: false });
               return;
             }
             try {
               await WN.store.mutate('savePage', pageInfo(true));
               await reload();
-              U.toast('已保存到 WebNote');
+              U.toast(t('content.savedToLibrary'));
               sendResponse({ ok: true });
             } catch (err) {
-              U.toast((err && err.message) || '保存失败', true);
+              U.toast((err && err.message) || t('error.saveFailed'), true);
               sendResponse({ ok: false, error: err && err.message });
             }
           })();
@@ -433,19 +446,19 @@
 
   async function annotateSelection(message) {
     if (!isEnabledHere()) {
-      U.toast('WebNote 已在本站关闭，点击扩展图标可开启');
+      U.toast(t('content.disabledHere'));
       return false;
     }
 
     const range = A.getSelectionRange();
     if (!range) {
-      U.toast('请先选中要标注的文字');
+      U.toast(t('content.selectFirst'));
       return false;
     }
 
     const selector = A.selectorFromRange(range);
     if (!selector) {
-      U.toast('这段内容无法标注（可能是输入框或隐藏区域）');
+      U.toast(t('content.cannotAnnotate'));
       return false;
     }
 
@@ -502,6 +515,7 @@
     state.url = M.normalizeUrl(location.href);
     const snapshot = await WN.store.readState();
     state.settings = snapshot.settings;
+    WN.i18n.setLocale(state.settings.locale);
     state.page = snapshot.pages[state.url] || null;
     state.annotations = state.page ? state.page.annotations.slice() : [];
 

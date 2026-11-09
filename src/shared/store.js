@@ -8,6 +8,14 @@
   const WN = (root.WN = root.WN || {});
   const M = WN.model;
 
+  function t(key, params) {
+    try {
+      return WN.i18n ? WN.i18n.t(key, params) : key;
+    } catch (err) {
+      return key;
+    }
+  }
+
   /** 读取完整状态（只读，安全） */
   async function readState() {
     try {
@@ -25,10 +33,10 @@
     try {
       res = await chrome.runtime.sendMessage({ type: 'WN_MUTATE', op: op, payload: payload || {} });
     } catch (err) {
-      throw new Error('无法连接扩展后台，请刷新页面后重试');
+      throw new Error(t('error.backgroundUnavailable'));
     }
     if (!res || !res.ok) {
-      throw new Error((res && res.error) || '操作失败');
+      throw new Error((res && res.error) || t('error.operationFailed'));
     }
     return res;
   }
@@ -106,10 +114,10 @@
   function relativeTime(ts) {
     if (!ts) return '';
     const diff = Date.now() - ts;
-    if (diff < 60e3) return '刚刚';
-    if (diff < 3600e3) return Math.floor(diff / 60e3) + ' 分钟前';
-    if (diff < 86400e3) return Math.floor(diff / 3600e3) + ' 小时前';
-    if (diff < 7 * 86400e3) return Math.floor(diff / 86400e3) + ' 天前';
+    if (diff < 60e3) return t('time.justNow');
+    if (diff < 3600e3) return t('time.minutesAgo', { n: Math.floor(diff / 60e3) });
+    if (diff < 86400e3) return t('time.hoursAgo', { n: Math.floor(diff / 3600e3) });
+    if (diff < 7 * 86400e3) return t('time.daysAgo', { n: Math.floor(diff / 86400e3) });
     const d = new Date(ts);
     const pad = (n) => String(n).padStart(2, '0');
     return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());

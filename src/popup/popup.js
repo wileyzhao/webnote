@@ -4,6 +4,10 @@
   const WN = window.WN;
   const M = WN.model;
 
+  function t(key, params) {
+    return WN.i18n.t(key, params);
+  }
+
   const $ = (id) => document.getElementById(id);
 
   let tab = null;
@@ -46,20 +50,21 @@
 
     $('toggleEnabled').checked = settings.enabled;
 
-    $('pageTitle').textContent = injectable ? tab.title || pageUrl : '当前页面不可标注';
+    $('pageTitle').textContent = injectable ? tab.title || pageUrl : t('popup.unsupportedPage');
     $('pageUrl').textContent = tab && tab.url ? tab.url : '';
-    $('countText').textContent = annotations.length ? annotations.length + ' 条标注' : '尚未标注';
+    $('countText').textContent = annotations.length ? t('popup.count', { n: annotations.length }) : t('popup.noNotes');
 
     const siteOff = settings.disabledHosts.indexOf(host) >= 0;
-    $('btnSiteToggle').textContent = siteOff ? '本站启用' : '本站禁用';
+    $('btnSiteToggle').textContent = siteOff ? t('popup.enableSite') : t('popup.disableSite');
     $('btnSiteToggle').disabled = !injectable;
     $('btnSave').disabled = !injectable || !settings.enabled;
+    $('btnSave').textContent = t('popup.savePage');
 
     $('statusText').textContent = !settings.enabled
-      ? '已全局关闭'
+      ? t('popup.status.off')
       : siteOff
-      ? '本站已暂停'
-      : '本地高亮与批注';
+      ? t('popup.status.siteOff')
+      : t('popup.status.normal');
 
     renderList(annotations, page);
   }
@@ -72,8 +77,8 @@
     if (!annotations.length) {
       empty.hidden = false;
       empty.querySelector('.empty-sub').textContent = injectable
-        ? '在网页上选中文字，即可高亮或写批注'
-        : '请打开一个普通网页后再使用';
+        ? t('popup.emptySub')
+        : t('popup.emptySubUnsupported');
       return;
     }
     empty.hidden = true;
@@ -138,7 +143,7 @@
       render();
       relay({ type: 'WN_OPEN_SETTINGS' });
     } catch (err) {
-      showHint((err && err.message) || '操作失败');
+      showHint((err && err.message) || t('error.operationFailed'));
       $('toggleEnabled').checked = !enabled;
     }
   }
@@ -156,7 +161,7 @@
       render();
       relay({ type: 'WN_OPEN_SETTINGS' });
     } catch (err) {
-      showHint((err && err.message) || '操作失败');
+      showHint((err && err.message) || t('error.operationFailed'));
     }
   }
 
@@ -190,15 +195,15 @@
       render();
       flashSaved();
     } catch (err) {
-      showHint((err && err.message) || '保存失败');
+      showHint((err && err.message) || t('error.saveFailed'));
     }
   }
 
   function flashSaved() {
     const btn = $('btnSave');
-    btn.textContent = '已保存';
+    btn.textContent = t('popup.saved');
     setTimeout(() => {
-      btn.textContent = '保存本页';
+      btn.textContent = t('popup.savePage');
     }, 1600);
   }
 
@@ -218,7 +223,7 @@
       const item = e.target.closest('.item');
       if (!item) return;
       if (!contentReady) {
-        showHint('页面尚未就绪，请刷新网页后再试');
+        showHint(t('popup.pageNotReady'));
         return;
       }
       relay({ type: 'WN_FOCUS_ANNOTATION', id: item.dataset.id });
@@ -231,6 +236,8 @@
   async function init() {
     tab = await WN.store.getActiveTab();
     snapshot = await WN.store.readState();
+    WN.i18n.setLocale(snapshot.settings.locale);
+    WN.i18n.applyI18n(document);
 
     if (tab && tab.url) {
       pageUrl = M.normalizeUrl(tab.url);
@@ -253,7 +260,7 @@
         contentReady = false;
       }
       if (!contentReady) {
-        showHint('这个页面还没加载 WebNote 脚本，刷新一次网页即可使用');
+        showHint(t('popup.notReady'));
       }
     }
   }
@@ -261,6 +268,8 @@
   WN.store.watch(() => {
     WN.store.readState().then((next) => {
       snapshot = next;
+      WN.i18n.setLocale(snapshot.settings.locale);
+      WN.i18n.applyI18n(document);
       render();
     });
   });

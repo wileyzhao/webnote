@@ -323,6 +323,7 @@ try {
     const sw = connect(swTarget.webSocketDebuggerUrl);
     await sw.ready;
     const sample = buildSample(Date.now(), 86400000);
+    sample.settings.locale = 'zh-CN';
     await evaluate(sw, "chrome.storage.local.set({'webnote:v1': " + JSON.stringify(sample) + "}).then(() => 1)");
     sw.close();
     console.log('  （已注入示例数据）');
@@ -367,7 +368,7 @@ try {
 
   // 页面卡片：编辑标签
   await evaluate(dash, `(() => {
-    const btn = Array.from(document.querySelectorAll('.mini-btn')).find((b) => b.textContent === '编辑标签');
+    const btn = document.querySelector('.mini-btn[data-act="tags"]');
     if (btn) btn.click();
   })()`);
   await sleep(600);
